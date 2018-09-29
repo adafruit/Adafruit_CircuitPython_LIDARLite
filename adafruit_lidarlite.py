@@ -89,23 +89,30 @@ class LIDARLite:
         self.i2c_bus = i2c_bus
         self.i2c_device = I2CDevice(i2c_bus, address)
         self._buf = bytearray(2)
+        self._reset = reset_pin
         time.sleep(0.5)
         self.configure(configuration)
     
     def reset(self):
         # Optional hardware reset pin
-        if reset_pin is not None:
-            reset_pin.direction = Direction.OUTPUT
-            reset_pin.value = True
-            reset_pin.value = False
+        if self._reset is not None:
+            self._reset.direction = Direction.OUTPUT
+            self._reset.value = True
+            self._reset.value = False
             time.sleep(0.01)
-            reset_pin.value = True
+            self._reset.value = True
         else:
             try:
                 self._write_reg(_REG_ACQ_COMMAND, _CMD_RESET)
             except OSError:
                 pass   # it doesnt respond well once reset
-        time.sleep(3)
+        time.sleep(1)
+        # take 100 readings to 'flush' out sensor!
+        for _ in range(100):
+            try:
+                self.read_distance(True)
+            except RuntimeError:
+                pass
 
     def configure(self, config):
         settings = _configurations[config]
@@ -113,20 +120,13 @@ class LIDARLite:
         self._write_reg(0x04, settings[1])
         self._write_reg(0x1c, settings[2])
 
-    def get_distance(self):
-
-        # write & wait
-        with self.i2c_device as i2c:
-            i2c.write(bytes([0, 4]))
-        time.sleep(0.02)  # in arduino library
-
     def read_distance(self, bias=False):
         if bias:
             self._write_reg(_REG_ACQ_COMMAND, _CMD_DISTANCEWITHBIAS)
         else:
             self._write_reg(_REG_ACQ_COMMAND, _CMD_DISTANCENOBIAS)
         d = self._read_reg(0x8F, 2)
-        if self._status & (STATUS_REF_OVERFLOW | STATUS_SIGNAL_OVERFLOW | STATUS_NO_PEAK | STATUS_SECOND_RETURN):
+        if self._status & (STATUS_NO_PEAK | STATUS_SECOND_RETURN):
             raise RuntimeError("Measurement failure")
         if (self._status & STATUS_SYS_ERROR) or (not self._status & STATUS_HEALTHY):
             raise RuntimeError("System failure")
@@ -135,19 +135,11 @@ class LIDARLite:
 
     @property
     def distance(self):
-        #return self.read_distance()  # try to read the distance
-        self._write_reg(0x00, 0x04)
-        buf = self._read_reg(0x8F, 2)
-        #with self.i2c_device as i2c:
-        #    buf = bytearray(2)
-        #    i2c.write(bytes([0x8F]))
-        #    i2c.readinto( buf)
-        return buf[0] << 8 | buf[1]
+        return self.read_distance()  # try to read the distance
   
     @property
     def bias_distance(self):
         return self.read_distance(True)
-
 
     @property
     def status(self):
@@ -155,7 +147,6 @@ class LIDARLite:
         with self.i2c_device as i2c:
             i2c.write(buf)
             i2c.readinto(buf)
-        print("Status: ", [hex(i) for i in buf])
         return buf[0]
 
     def _write_reg(self, reg, value):        
