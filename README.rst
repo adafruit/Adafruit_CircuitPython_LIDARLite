@@ -9,8 +9,8 @@ Introduction
     :target: https://discord.gg/nBQh6qu
     :alt: Discord
 
-.. image:: https://travis-ci.com/adafruit/Adafruit_CircuitPython_LIDARLite.svg?branch=master
-    :target: https://travis-ci.com/adafruit/Adafruit_CircuitPython_LIDARLite
+.. image:: https://github.com/adafruit/Adafruit_CircuitPython_LIDARLite/workflows/Build%20CI/badge.svg
+    :target: https://github.com/adafruit/Adafruit_CircuitPython_LIDARLite/actions/
     :alt: Build Status
 
 A CircuitPython & Python library for Garmin LIDAR Lite sensors over I2C
