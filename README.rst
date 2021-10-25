@@ -76,6 +76,11 @@ Usage Example
                 print(e)
     	    time.sleep(0.01) # you can remove this for ultra-fast measurements!
 
+Documentation
+=============
+
+API documentation for this library can be found on `Read the Docs <https://circuitpython.readthedocs.io/projects/lidarlite/en/latest/>`_.
+
 Contributing
 ============
 
