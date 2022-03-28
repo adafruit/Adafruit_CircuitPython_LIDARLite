@@ -70,9 +70,20 @@ _LIDAR_CONFIGS = (
 class LIDARLite:
     """
     A driver for the Garmin LIDAR Lite laser distance sensor.
+
+    Initialize the hardware for the LIDAR over I2C. You can pass in an
+    optional reset_pin for when you call reset(). There are a few common
+    configurations Garmin suggests: CONFIG_DEFAULT, CONFIG_SHORTFAST,
+    CONFIG_DEFAULTFAST, CONFIG_MAXRANGE, CONFIG_HIGHSENSITIVE, and
+    CONFIG_LOWSENSITIVE. For the I2C address, the default is 0x62 but if you
+    pass a different number in, we'll try to change the address so multiple
+    LIDARs can be connected. (Note all but one need to be in reset for this
+    to work!)
+
     :param i2c_bus: The `busio.I2C` object to use. This is the only
-    required parameter.
-    :param int address: (optional) The I2C address of the device to set after initialization.
+                    required parameter.
+    :param int address: (optional) The I2C address of the device to set
+                        after initialization.
     """
 
     def __init__(
@@ -83,14 +94,6 @@ class LIDARLite:
         configuration=CONFIG_DEFAULT,
         address=_ADDR_DEFAULT
     ):
-        """Initialize the hardware for the LIDAR over I2C. You can pass in an
-        optional reset_pin for when you call reset(). There are a few common
-        configurations Garmin suggests: CONFIG_DEFAULT, CONFIG_SHORTFAST,
-        CONFIG_DEFAULTFAST, CONFIG_MAXRANGE, CONFIG_HIGHSENSITIVE, and
-        CONFIG_LOWSENSITIVE. For the I2C address, the default is 0x62 but if you
-        pass a different number in, we'll try to change the address so multiple
-        LIDARs can be connected. (Note all but one need to be in reset for this
-        to work!)"""
         self.i2c_device = I2CDevice(i2c_bus, address)
         self._buf = bytearray(2)
         self._bias_count = 0
