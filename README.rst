@@ -15,6 +15,8 @@ Introduction
 
 A CircuitPython & Python library for Garmin LIDAR Lite sensors over I2C
 
+**Does not work with Lidar Lite v4 at this time, no ETA when it may be added - PRs accepted!**
+
 Dependencies
 =============
 This driver depends on:
