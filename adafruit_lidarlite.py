@@ -57,10 +57,10 @@ _CMD_RESET = const(0x00)
 _CMD_DISTANCENOBIAS = const(0x03)
 _CMD_DISTANCEWITHBIAS = const(0x04)
 _CMD_DISTANCE_V3HP = const(0x03)
-_NUM_DIST_BYTES = 2     # How many bytes is the returned distance measurement?
+_NUM_DIST_BYTES = 2  # How many bytes is the returned distance measurement?
 
-TYPE_V3 = 'V3'
-TYPE_V3HP = 'V3HP'
+TYPE_V3 = "V3"
+TYPE_V3HP = "V3HP"
 
 CONFIG_DEFAULT = 0
 CONFIG_SHORTFAST = 1
@@ -145,16 +145,14 @@ class LIDARLite:
             try:
                 self._write_reg(_REG_ACQ_COMMAND, _CMD_RESET)
             except OSError:
-                print('OSError')
-                pass  # it doesnt respond well once reset
+                print("OSError")
         time.sleep(1)
         # take 100 readings to 'flush' out sensor!
         for _ in range(100):
             try:
                 self.read_distance_v3(True)
             except RuntimeError:
-                print('RuntimeError')
-                pass
+                print("RuntimeError")
 
     def configure(self, config):
         """Set the LIDAR desired style of measurement. There are a few common
@@ -177,19 +175,18 @@ class LIDARLite:
         if self._status & (STATUS_NO_PEAK | STATUS_SECOND_RETURN):
             if self._status & STATUS_NO_PEAK:
                 raise RuntimeError("Measurement failure STATUS_NO_PEAK")
-            elif self._status & STATUS_SECOND_RETURN:
+            if self._status & STATUS_SECOND_RETURN:
                 raise RuntimeError("Measurement failure STATUS_NO_PEAK")
-            else:
-                raise RuntimeError("Some other runtime error")
+            raise RuntimeError("Some other runtime error")
 
         if (self._status & STATUS_SYS_ERROR) or (not self._status & STATUS_HEALTHY):
             raise RuntimeError("System failure")
         return dist[0] << 8 | dist[1]
 
     def read_distance_v3hp(self):
-        """Perform a distance measurement for the v3 HP sensor
-        """
-        # Any non-zero value written to _REG_ACQ_COMMAND will start a reading on v3HP, no bias vs. non-bias
+        """Perform a distance measurement for the v3 HP sensor"""
+        # Any non-zero value written to _REG_ACQ_COMMAND will start a reading on v3HP, no bias vs.
+        #   non-bias
         self._write_reg(_REG_ACQ_COMMAND, _CMD_DISTANCEWITHBIAS)
         dist = self._read_reg(_REG_DIST_MEAS_V3HP, _NUM_DIST_BYTES)
         return dist[0] << 8 | dist[1]
@@ -221,8 +218,8 @@ class LIDARLite:
         """Reads health status for v3HP (not available on v3, will return -1)"""
         if self._sensor_type == TYPE_V3HP:
             return self._read_reg(_REG_HEALTH_STATUS_V3HP, 1)[0]
-        else:
-            return -1
+
+        return -1
 
     @property
     def signal_strength(self):
@@ -238,7 +235,7 @@ class LIDARLite:
         return high_byte[0] << 8 | low_byte[0]
 
     @property
-    def distance(self):
+    def distance(self):  # pylint: disable=R1710
         """The measured distance in cm. Will take a bias reading every 100 calls"""
         self._bias_count -= 1
 
@@ -246,8 +243,11 @@ class LIDARLite:
             self._bias_count = 100  # every 100 reads, check bias
         if self._sensor_type == TYPE_V3:
             return self.read_distance_v3(self._bias_count <= 0)
-        elif self._sensor_type == TYPE_V3HP:
+        if self._sensor_type == TYPE_V3HP:
             return self.read_distance_v3hp()
+
+        # If no sensor type has been identified, return a negative distance as an error
+        return -1.0
 
     @property
     def status(self):
