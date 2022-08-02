@@ -13,6 +13,10 @@ Introduction
     :target: https://github.com/adafruit/Adafruit_CircuitPython_LIDARLite/actions/
     :alt: Build Status
 
+.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
+    :target: https://github.com/psf/black
+    :alt: Code Style: Black
+
 A CircuitPython & Python library for Garmin LIDAR Lite sensors over I2C
 
 **Does not work with Lidar Lite v4 at this time, no ETA when it may be added - PRs accepted!**
