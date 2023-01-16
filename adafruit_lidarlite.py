@@ -32,6 +32,13 @@ from adafruit_bus_device.i2c_device import I2CDevice
 from digitalio import Direction
 from micropython import const
 
+try:
+    from typing import Optional
+    from microcontroller import Pin
+    from busio import I2C
+except ImportError:
+    pass
+
 __version__ = "0.0.0+auto.0"
 __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_LIDARLite.git"
 
@@ -115,13 +122,13 @@ class LIDARLite:
 
     def __init__(
         self,
-        i2c_bus,
+        i2c_bus: I2C,
         *,
-        reset_pin=None,
-        configuration=CONFIG_DEFAULT,
-        address=_ADDR_DEFAULT,
-        sensor_type=TYPE_V3,
-    ):
+        reset_pin: Optional[Pin] = None,
+        configuration: Optional[int] = CONFIG_DEFAULT,
+        address: Optional[int] = _ADDR_DEFAULT,
+        sensor_type: Optional[str] = TYPE_V3,
+    ) -> None:
         self.i2c_device = I2CDevice(i2c_bus, address)
         self._buf = bytearray(2)
         self._bias_count = 0
@@ -131,7 +138,7 @@ class LIDARLite:
         self._status = self.status
         self._sensor_type = sensor_type
 
-    def reset(self):
+    def reset(self) -> None:
         """Hardware reset (if pin passed into init) or software reset. Will take
         100 readings in order to 'flush' measurement unit, otherwise data is off."""
         # Optional hardware reset pin
@@ -154,7 +161,7 @@ class LIDARLite:
             except RuntimeError:
                 print("RuntimeError")
 
-    def configure(self, config):
+    def configure(self, config: int) -> None:
         """Set the LIDAR desired style of measurement. There are a few common
         configurations Garmin suggests: CONFIG_DEFAULT, CONFIG_SHORTFAST,
         CONFIG_DEFAULTFAST, CONFIG_MAXRANGE, CONFIG_HIGHSENSITIVE, and
@@ -164,7 +171,7 @@ class LIDARLite:
         self._write_reg(_REG_ACQ_CONFIG_REG, settings[1])
         self._write_reg(_REG_THRESHOLD_BYPASS, settings[2])
 
-    def read_distance_v3(self, bias=False):
+    def read_distance_v3(self, bias: Optional[bool] = False) -> int:
         """Perform a distance reading with or without 'bias'. It's recommended
         to take a bias measurement every 100 non-bias readings (they're slower)"""
         if bias:
@@ -183,7 +190,7 @@ class LIDARLite:
             raise RuntimeError("System failure")
         return dist[0] << 8 | dist[1]
 
-    def read_distance_v3hp(self):
+    def read_distance_v3hp(self) -> int:
         """Perform a distance measurement for the v3 HP sensor"""
         # Any non-zero value written to _REG_ACQ_COMMAND will start a reading on v3HP, no bias vs.
         #   non-bias
@@ -192,29 +199,29 @@ class LIDARLite:
         return dist[0] << 8 | dist[1]
 
     @property
-    def correlation_data(self):
+    def correlation_data(self) -> int:
         """Reads correlation data"""
         # TODO: How to translate correlation data property?
         corr_data = self._read_reg(_REG_CORR_DATA, 2)
         return corr_data[0] << 8 | corr_data[1]
 
     @property
-    def test_command(self):
+    def test_command(self) -> int:
         """Reads the test command"""
         return self._read_reg(_REG_TEST_COMMAND, 1)[0]
 
     @property
-    def i2c_config(self):
+    def i2c_config(self) -> int:
         """Reads the I2C config"""
         return self._read_reg(_REG_I2C_CONFIG, 1)[0]
 
     @property
-    def power_control(self):
+    def power_control(self) -> int:
         """Reads the power control register"""
         return self._read_reg(_REG_POWER_CONTROL, 1)[0]
 
     @property
-    def health_status(self):
+    def health_status(self) -> int:
         """Reads health status for v3HP (not available on v3, will return -1)"""
         if self._sensor_type == TYPE_V3HP:
             return self._read_reg(_REG_HEALTH_STATUS_V3HP, 1)[0]
@@ -222,12 +229,12 @@ class LIDARLite:
         return -1
 
     @property
-    def signal_strength(self):
+    def signal_strength(self) -> int:
         """Reads the signal strength of the last measurement"""
         return self._read_reg(_REG_SIGNAL_STRENGTH, 1)[0]
 
     @property
-    def unit_id(self):
+    def unit_id(self) -> int:
         """Reads the serial number of the unit"""
         high_byte = self._read_reg(_REG_UNIT_ID_HIGH, 1)
         low_byte = self._read_reg(_REG_UNIT_ID_LOW, 1)
@@ -235,7 +242,7 @@ class LIDARLite:
         return high_byte[0] << 8 | low_byte[0]
 
     @property
-    def distance(self):  # pylint: disable=R1710
+    def distance(self) -> int:  # pylint: disable=R1710
         """The measured distance in cm. Will take a bias reading every 100 calls"""
         self._bias_count -= 1
 
@@ -250,14 +257,14 @@ class LIDARLite:
         return -1.0
 
     @property
-    def status(self):
+    def status(self) -> int:
         """The status byte, check datasheet for bitmask"""
         buf = bytearray([_REG_STATUS])
         with self.i2c_device as i2c:
             i2c.write_then_readinto(buf, buf)
         return buf[0]
 
-    def _write_reg(self, reg, value):
+    def _write_reg(self, reg: int, value: int) -> None:
         self._buf[0] = reg
         self._buf[1] = value
         with self.i2c_device as i2c:
@@ -265,7 +272,7 @@ class LIDARLite:
             i2c.write(self._buf)
         time.sleep(0.001)  # there's a delay in arduino library
 
-    def _read_reg(self, reg, num):
+    def _read_reg(self, reg: int, num: int) -> bytearray:
         while True:
             self._status = self.status
             if not self._status & STATUS_BUSY:
