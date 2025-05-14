@@ -2,10 +2,11 @@
 # SPDX-License-Identifier: MIT
 
 import time
+
 import board
 import busio
-import adafruit_lidarlite
 
+import adafruit_lidarlite
 
 # Create library object using our Bus I2C port
 i2c = busio.I2C(board.SCL, board.SDA)
