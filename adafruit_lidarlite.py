@@ -28,14 +28,16 @@ Implementation Notes
 
 # imports
 import time
+
 from adafruit_bus_device.i2c_device import I2CDevice
 from digitalio import Direction
 from micropython import const
 
 try:
     from typing import Optional
-    from microcontroller import Pin
+
     from busio import I2C
+    from microcontroller import Pin
 except ImportError:
     pass
 
@@ -242,7 +244,7 @@ class LIDARLite:
         return high_byte[0] << 8 | low_byte[0]
 
     @property
-    def distance(self) -> int:  # pylint: disable=R1710
+    def distance(self) -> int:
         """The measured distance in cm. Will take a bias reading every 100 calls"""
         self._bias_count -= 1
 
@@ -254,7 +256,7 @@ class LIDARLite:
             return self.read_distance_v3hp()
 
         # If no sensor type has been identified, return a negative distance as an error
-        return -1.0
+        return -1
 
     @property
     def status(self) -> int:
